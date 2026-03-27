@@ -17,7 +17,7 @@ export function getDb(): Client {
       ? rawUrl.replace('libsql://', 'https://')
       : rawUrl;
 
-    client = createClient({ url, authToken });
+    client = createClient({ url, authToken, fetch: globalThis.fetch });
   }
   return client;
 }
