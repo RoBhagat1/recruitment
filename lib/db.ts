@@ -66,8 +66,13 @@ const SCHEMA_STATEMENTS = [
 export async function initDb(): Promise<void> {
   const db = getDb();
 
-  for (const stmt of SCHEMA_STATEMENTS) {
-    await db.execute(stmt);
+  for (let i = 0; i < SCHEMA_STATEMENTS.length; i++) {
+    try {
+      await db.execute(SCHEMA_STATEMENTS[i]);
+    } catch (e) {
+      console.error(`initDb: statement ${i} failed:`, SCHEMA_STATEMENTS[i].slice(0, 80), e);
+      throw e;
+    }
   }
 
   // Migrations for existing databases
