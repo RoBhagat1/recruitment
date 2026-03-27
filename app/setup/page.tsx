@@ -73,6 +73,12 @@ export default function SetupPage() {
       parsed.push({ name: parts[0], email: parts[1] });
     }
     if (parsed.length < 2) { setGraderError('At least 2 graders required'); return; }
+    const emails = parsed.map((g) => g.email.toLowerCase());
+    const dupes = emails.filter((e, i) => emails.indexOf(e) !== i);
+    if (dupes.length > 0) {
+      setGraderError(`Duplicate email${dupes.length > 1 ? 's' : ''}: ${[...new Set(dupes)].join(', ')}`);
+      return;
+    }
     setGraderError('');
     setGraders(parsed);
     setStep('confirm');

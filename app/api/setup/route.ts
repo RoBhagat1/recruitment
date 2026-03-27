@@ -80,9 +80,15 @@ export async function POST(req: NextRequest) {
     const db = getDb();
     const adminToken = adminPassword;
 
+    // Clear any stale data from a previous incomplete setup
+    await db.execute(`DELETE FROM scores`);
+    await db.execute(`DELETE FROM assignments`);
+    await db.execute(`DELETE FROM graders`);
+    await db.execute(`DELETE FROM applications`);
+
     // Insert config
     await db.execute({
-      sql: `INSERT INTO config (id, admin_token, status, csv_headers, score_fields)
+      sql: `INSERT OR REPLACE INTO config (id, admin_token, status, csv_headers, score_fields)
             VALUES (1, ?, 'setup', ?, ?)`,
       args: [adminToken, JSON.stringify(parsed.headers), JSON.stringify(scoreFields)],
     });
