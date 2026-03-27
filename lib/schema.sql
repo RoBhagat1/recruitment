@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS config (
   csv_headers             TEXT    NOT NULL DEFAULT '[]',
   score_fields            TEXT    NOT NULL DEFAULT '[]',
   normalization_factors   TEXT,
-  created_at              INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+  created_at              INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
 CREATE TABLE IF NOT EXISTS applications (
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS applications (
   admin_note  TEXT,
   final_score REAL,
   rank        INTEGER,
-  created_at  INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+  created_at  INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
 CREATE TABLE IF NOT EXISTS graders (
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS graders (
   name       TEXT NOT NULL,
   email      TEXT NOT NULL UNIQUE,
   token      TEXT NOT NULL UNIQUE,
-  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+  created_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
 CREATE TABLE IF NOT EXISTS assignments (
