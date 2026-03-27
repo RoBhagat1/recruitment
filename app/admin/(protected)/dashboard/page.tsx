@@ -20,6 +20,7 @@ interface DashboardData {
   status: string; progress: { total: number; completed: number };
   graders: GraderProgress[]; applications: ApplicationData[];
   scoreFields: string[]; csvHeaders: string[];
+  graderInstructions: string | null;
 }
 
 export default function AdminDashboardPage() {
@@ -33,6 +34,8 @@ export default function AdminDashboardPage() {
   const [resetting, setResetting] = useState(false);
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [savingNote, setSavingNote] = useState<number | null>(null);
+  const [instructions, setInstructions] = useState('');
+  const [savingInstructions, setSavingInstructions] = useState(false);
   const router = useRouter();
 
   const fetchData = useCallback(async () => {
@@ -42,6 +45,7 @@ export default function AdminDashboardPage() {
       const json = await res.json();
       if (!res.ok) { setError(json.error); return; }
       setData(json);
+      setInstructions((prev) => prev || (json.graderInstructions ?? ''));
       // Seed local note state from server (only for apps not currently being edited)
       setNotes((prev) => {
         const next = { ...prev };
@@ -77,6 +81,16 @@ export default function AdminDashboardPage() {
       body: JSON.stringify({ note: notes[appId] ?? '' }),
     });
     setSavingNote(null);
+  };
+
+  const handleSaveInstructions = async () => {
+    setSavingInstructions(true);
+    await fetch('/api/admin/config', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ graderInstructions: instructions }),
+    });
+    setSavingInstructions(false);
   };
 
   const handleFinalize = async (force = false) => {
@@ -178,6 +192,21 @@ export default function AdminDashboardPage() {
               </div>
             ))}
           </div>
+        </Card>
+
+        {/* Grader instructions */}
+        <Card className="p-6">
+          <h2 className="font-semibold text-gray-800 mb-1">Instructions for Graders</h2>
+          <p className="text-xs text-gray-500 mb-3">This text appears at the top of every application for all graders. Use it for rubrics, scoring criteria, or reminders.</p>
+          <textarea
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            onBlur={handleSaveInstructions}
+            placeholder="e.g. Score based on clarity of writing and relevance to the role. Ignore formatting."
+            rows={3}
+            className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          {savingInstructions && <p className="text-xs text-gray-400 mt-1">Saving…</p>}
         </Card>
 
         {/* Applications table */}

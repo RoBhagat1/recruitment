@@ -59,6 +59,7 @@ export async function GET(
       existingComment,
       csvHeaders: config?.csv_headers ?? [],
       scoreFields: config?.score_fields ?? [],
+      graderInstructions: config?.grader_instructions ?? null,
     });
   } catch (e) {
     console.error(e);

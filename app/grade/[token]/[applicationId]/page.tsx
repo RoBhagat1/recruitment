@@ -16,6 +16,7 @@ interface AppData {
   existingComment: string;
   csvHeaders: string[];
   scoreFields: string[];
+  graderInstructions: string | null;
 }
 
 export default function GraderScoringPage() {
@@ -106,6 +107,14 @@ export default function GraderScoringPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+        {/* Admin instructions */}
+        {appData.graderInstructions && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">Instructions</p>
+            <p className="text-sm text-amber-900 whitespace-pre-wrap">{appData.graderInstructions}</p>
+          </div>
+        )}
+
         {/* Context fields */}
         {contextFields.length > 0 && (
           <Card className="p-4">

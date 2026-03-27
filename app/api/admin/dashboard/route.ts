@@ -132,6 +132,7 @@ export async function GET(req: NextRequest) {
       scoreFields: config?.score_fields ?? [],
       csvHeaders: config?.csv_headers ?? [],
       normalizationFactors: config?.normalization_factors ?? null,
+      graderInstructions: config?.grader_instructions ?? null,
     });
   } catch (e) {
     console.error(e);
