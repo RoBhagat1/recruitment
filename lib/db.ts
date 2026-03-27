@@ -4,12 +4,18 @@ let client: Client | null = null;
 
 export function getDb(): Client {
   if (!client) {
-    const url = process.env.TURSO_DATABASE_URL;
+    const rawUrl = process.env.TURSO_DATABASE_URL;
     const authToken = process.env.TURSO_AUTH_TOKEN;
 
-    if (!url) {
+    if (!rawUrl) {
       throw new Error('TURSO_DATABASE_URL environment variable is required');
     }
+
+    // Force HTTPS transport — libsql:// tries WebSocket/hrana-v3 which fails
+    // in serverless environments (Vercel). https:// uses plain HTTP.
+    const url = rawUrl.startsWith('libsql://')
+      ? rawUrl.replace('libsql://', 'https://')
+      : rawUrl;
 
     client = createClient({ url, authToken });
   }
