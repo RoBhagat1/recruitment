@@ -87,6 +87,7 @@ export default function AssignmentsPage() {
 
   const contextFields = data.csvHeaders.filter((h) => !data.scoreFields.includes(h));
   const nameField =
+    data.csvHeaders.find((h) => h === 'Full Name') ??
     data.csvHeaders.find((h) => h === 'First name') ??
     data.csvHeaders.find((h) => h === 'Email') ??
     contextFields[0];

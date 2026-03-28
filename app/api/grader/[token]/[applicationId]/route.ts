@@ -48,6 +48,18 @@ export async function GET(
       existingScores[row.field_name as string] = row.score as number;
     }
 
+    // Grader's overall progress
+    const progressResult = await db.execute({
+      sql: `SELECT COUNT(*) as total, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
+            FROM assignments WHERE grader_id = ?`,
+      args: [grader.id],
+    });
+    const progressRow = progressResult.rows[0];
+    const graderProgress = {
+      total: progressRow.total as number,
+      completed: progressRow.completed as number,
+    };
+
     const config = await getConfig();
 
     return NextResponse.json({
@@ -57,8 +69,10 @@ export async function GET(
       fields,
       existingScores,
       existingComment,
+      graderProgress,
       csvHeaders: config?.csv_headers ?? [],
       scoreFields: config?.score_fields ?? [],
+      customScoreFields: config?.custom_score_fields ?? [],
       graderInstructions: config?.grader_instructions ?? null,
     });
   } catch (e) {

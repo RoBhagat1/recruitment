@@ -25,6 +25,7 @@ interface DashboardData {
 
 export default function FinalizePage() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -125,43 +126,63 @@ export default function FinalizePage() {
               {ranked.map((app) => {
                 const isTied = app.rank !== null && (rankCounts[app.rank] ?? 0) > 1;
                 return (
-                  <tr key={app.id} className={`${isTied ? 'bg-yellow-50' : 'hover:bg-gray-50'} transition-colors`}>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
-                          ${app.rank === 1 ? 'bg-yellow-400 text-white' :
-                            app.rank === 2 ? 'bg-gray-300 text-white' :
-                            app.rank === 3 ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                          {app.rank}
-                        </span>
-                        {isTied && <Badge label="TIE" color="orange" />}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-medium text-gray-800">
-                        {nameField ? app.fields[nameField] : `Application #${app.rowIndex + 1}`}
-                      </p>
-                      {contextFields.filter((f) => f !== nameField).slice(0, 2).map((f) => (
-                        <p key={f} className="text-xs text-gray-500">{app.fields[f]}</p>
-                      ))}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex gap-2 flex-wrap">
-                        {app.assignments.map((a, i) => (
-                          <Badge
-                            key={i}
-                            label={`${a.graderName}: ${a.total ?? '–'}`}
-                            color={a.status === 'completed' ? 'green' : 'yellow'}
-                          />
+                  <>
+                    <tr
+                      key={app.id}
+                      className={`${isTied ? 'bg-yellow-50 cursor-pointer hover:bg-yellow-100' : 'hover:bg-gray-50'} transition-colors`}
+                      onClick={isTied ? () => setExpandedId(expandedId === app.id ? null : app.id) : undefined}
+                    >
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+                            ${app.rank === 1 ? 'bg-yellow-400 text-white' :
+                              app.rank === 2 ? 'bg-gray-300 text-white' :
+                              app.rank === 3 ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                            {app.rank}
+                          </span>
+                          {isTied && <Badge label="TIE" color="orange" />}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <p className="font-medium text-gray-800">
+                          {nameField ? app.fields[nameField] : `Application #${app.rowIndex + 1}`}
+                        </p>
+                        {contextFields.filter((f) => f !== nameField).slice(0, 2).map((f) => (
+                          <p key={f} className="text-xs text-gray-500">{app.fields[f]}</p>
                         ))}
-                      </div>
-                    </td>
-                    <td className="p-4 text-right">
-                      <span className="text-lg font-bold text-indigo-700">
-                        {app.finalScore !== null ? app.finalScore.toFixed(2) : '–'}
-                      </span>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex gap-2 flex-wrap">
+                          {app.assignments.map((a, i) => (
+                            <Badge
+                              key={i}
+                              label={`${a.graderName}: ${a.total ?? '–'}`}
+                              color={a.status === 'completed' ? 'green' : 'yellow'}
+                            />
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-4 text-right">
+                        <span className="text-lg font-bold text-indigo-700">
+                          {app.finalScore !== null ? app.finalScore.toFixed(2) : '–'}
+                        </span>
+                      </td>
+                    </tr>
+                    {isTied && expandedId === app.id && (
+                      <tr>
+                        <td colSpan={4} className="px-4 pb-4 bg-yellow-50">
+                          <div className="bg-white border border-yellow-200 rounded-lg p-4 space-y-2">
+                            {data.csvHeaders.map((h) => app.fields[h] ? (
+                              <div key={h} className="grid grid-cols-3 gap-2 text-sm">
+                                <span className="text-gray-500 font-medium truncate">{h}</span>
+                                <span className="col-span-2 text-gray-800 whitespace-pre-wrap break-words">{app.fields[h]}</span>
+                              </div>
+                            ) : null)}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 );
               })}
             </tbody>

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const scoreFieldCount = config.score_fields.length;
+    const scoreFieldCount = config.score_fields.length + (config.custom_score_fields ?? []).length;
     const maxPossibleScore = scoreFieldCount * 2; // 2 graders, each scores all fields
 
     // --- Normalization: compute per-grader mean shift ---

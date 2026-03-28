@@ -54,7 +54,9 @@ export async function POST(req: NextRequest) {
     // Parse CSV
     const csvText = await csvFile.text();
     let scoreFieldsRaw = formData.get('scoreFields') as string | null;
+    const customScoreFieldsRaw = formData.get('customScoreFields') as string | null;
     let scoreFields: string[] = [];
+    let customScoreFields: string[] = [];
 
     let parsed;
     try {
@@ -77,6 +79,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'At least one scored column must be selected.' }, { status: 400 });
     }
 
+    if (customScoreFieldsRaw) {
+      try {
+        const parsed = JSON.parse(customScoreFieldsRaw);
+        if (Array.isArray(parsed)) {
+          customScoreFields = parsed.filter((f) => typeof f === 'string' && f.trim()).map((f) => f.trim());
+        }
+      } catch {
+        customScoreFields = [];
+      }
+    }
+
     const db = getDb();
     const adminToken = adminPassword;
 
@@ -88,9 +101,9 @@ export async function POST(req: NextRequest) {
 
     // Insert config
     await db.execute({
-      sql: `INSERT OR REPLACE INTO config (id, admin_token, status, csv_headers, score_fields)
-            VALUES (1, ?, 'setup', ?, ?)`,
-      args: [adminToken, JSON.stringify(parsed.headers), JSON.stringify(scoreFields)],
+      sql: `INSERT OR REPLACE INTO config (id, admin_token, status, csv_headers, score_fields, custom_score_fields)
+            VALUES (1, ?, 'setup', ?, ?, ?)`,
+      args: [adminToken, JSON.stringify(parsed.headers), JSON.stringify(scoreFields), JSON.stringify(customScoreFields)],
     });
 
     // Insert applications

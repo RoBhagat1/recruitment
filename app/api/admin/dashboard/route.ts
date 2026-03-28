@@ -113,7 +113,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const scoreFieldCount = (config?.score_fields ?? []).length;
+    const scoreFieldCount = (config?.score_fields ?? []).length + (config?.custom_score_fields ?? []).length;
     const applications = Array.from(appMap.values()).map((app) => {
       const allScores = app.assignments.flatMap((a) => Object.values(a.scores));
       const expectedScores = scoreFieldCount * 2;

@@ -17,6 +17,7 @@ export default function SetupPage() {
   const [headers, setHeaders] = useState<string[]>([]);
   const [previewRows, setPreviewRows] = useState<Record<string, string>[]>([]);
   const [scoreFields, setScoreFields] = useState<Set<string>>(new Set());
+  const [customFields, setCustomFields] = useState<string[]>([]);
   const [graderText, setGraderText] = useState('');
   const [graders, setGraders] = useState<GraderInput[]>([]);
   const [graderError, setGraderError] = useState('');
@@ -94,6 +95,10 @@ export default function SetupPage() {
       fd.append('graders', JSON.stringify(graders));
       fd.append('scoreFields', JSON.stringify(Array.from(scoreFields)));
       fd.append('adminPassword', adminPassword.trim());
+      const validCustomFields = customFields.map((f) => f.trim()).filter(Boolean);
+      if (validCustomFields.length > 0) {
+        fd.append('customScoreFields', JSON.stringify(validCustomFields));
+      }
 
       const res = await fetch('/api/setup', { method: 'POST', body: fd });
       const data = await res.json();
@@ -215,6 +220,42 @@ export default function SetupPage() {
               </div>
             )}
 
+            {/* Custom score questions */}
+            <div className="border-t border-gray-100 pt-5 mb-6">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm font-medium text-gray-700">Additional score questions</p>
+                <button
+                  onClick={() => setCustomFields([...customFields, ''])}
+                  className="text-indigo-600 text-sm hover:underline"
+                >+ Add question</button>
+              </div>
+              <p className="text-xs text-gray-500 mb-3">
+                Add extra scoring criteria beyond the CSV columns above. Graders score each on a 1–5 scale.
+              </p>
+              {customFields.length > 0 && (
+                <div className="space-y-2">
+                  {customFields.map((label, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input
+                        value={label}
+                        onChange={(e) => {
+                          const f = [...customFields];
+                          f[i] = e.target.value;
+                          setCustomFields(f);
+                        }}
+                        placeholder="e.g. Overall impression"
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <button
+                        onClick={() => setCustomFields(customFields.filter((_, j) => j !== i))}
+                        className="text-gray-400 hover:text-red-500 text-lg leading-none"
+                      >✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-between">
               <Button variant="secondary" onClick={() => setStep('upload')}>Back</Button>
               <Button onClick={() => scoreFields.size > 0 ? setStep('graders') : setError('Select at least one scored column')} disabled={scoreFields.size === 0}>
@@ -270,6 +311,12 @@ export default function SetupPage() {
                 <span className="text-gray-600">Scored columns</span>
                 <span className="font-semibold">{scoreFields.size} / {headers.length}</span>
               </div>
+              {customFields.filter(Boolean).length > 0 && (
+                <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-600">Custom questions</span>
+                  <span className="font-semibold">{customFields.filter(Boolean).length}</span>
+                </div>
+              )}
               <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
                 <span className="text-gray-600">Graders</span>
                 <span className="font-semibold">{graders.length}</span>

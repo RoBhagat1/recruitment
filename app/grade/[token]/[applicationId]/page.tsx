@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -14,8 +14,10 @@ interface AppData {
   fields: Record<string, string>;
   existingScores: Record<string, number>;
   existingComment: string;
+  graderProgress: { total: number; completed: number };
   csvHeaders: string[];
   scoreFields: string[];
+  customScoreFields: string[];
   graderInstructions: string | null;
 }
 
@@ -43,7 +45,8 @@ export default function GraderScoringPage() {
 
   const handleSubmit = async () => {
     if (!appData) return;
-    const missing = appData.scoreFields.filter((f) => scores[f] === undefined);
+    const allFields = [...appData.scoreFields, ...(appData.customScoreFields ?? [])];
+    const missing = allFields.filter((f) => scores[f] === undefined);
     if (missing.length > 0) {
       setSubmitError(`Please score all fields before submitting.`);
       return;
@@ -86,9 +89,24 @@ export default function GraderScoringPage() {
     </div>
   );
 
+  const renderWithLinks = (text: string) => {
+    const urlRegex = /https?:\/\/[^\s]+/g;
+    const parts: (string | React.ReactElement)[] = [];
+    let lastIndex = 0;
+    let match;
+    while ((match = urlRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
+      parts.push(<a key={match.index} href={match[0]} target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline break-all">{match[0]}</a>);
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+    return parts;
+  };
+
   const contextFields = appData.csvHeaders.filter((h) => !appData.scoreFields.includes(h));
-  const scoredCount = appData.scoreFields.filter((f) => scores[f] !== undefined).length;
-  const totalScored = appData.scoreFields.length;
+  const allScoredFields = [...appData.scoreFields, ...(appData.customScoreFields ?? [])];
+  const scoredCount = allScoredFields.filter((f) => scores[f] !== undefined).length;
+  const totalScored = allScoredFields.length;
   const allScored = scoredCount === totalScored;
 
   return (
@@ -99,9 +117,12 @@ export default function GraderScoringPage() {
           <button onClick={() => router.push(`/grade/${token}`)} className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
             ← Back
           </button>
-          <span className="text-sm font-medium text-gray-700">
-            Application #{appData.rowIndex + 1}
-          </span>
+          <div className="text-center">
+            <span className="text-sm font-medium text-gray-700">Application #{appData.rowIndex + 1}</span>
+            <p className="text-xs text-gray-400">
+              {appData.graderProgress.completed} of {appData.graderProgress.total} done
+            </p>
+          </div>
           <span className="text-xs text-gray-400">{scoredCount}/{totalScored} scored</span>
         </div>
       </div>
@@ -138,14 +159,30 @@ export default function GraderScoringPage() {
           </Card>
         )}
 
-        {/* Scoreable fields */}
+        {/* Scored CSV columns */}
         {appData.scoreFields.map((field) => (
           <Card key={field} className="p-4">
             <div className="mb-3">
               <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">{field}</p>
               <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
-                {appData.fields[field] || <span className="text-gray-400 italic">No response</span>}
+                {appData.fields[field] ? renderWithLinks(appData.fields[field]) : <span className="text-gray-400 italic">No response</span>}
               </p>
+            </div>
+            <div className="border-t border-gray-100 pt-3">
+              <p className="text-xs text-gray-500 mb-2">Score (1 = poor, 5 = excellent)</p>
+              <ScoreSelector
+                value={scores[field] ?? null}
+                onChange={(n) => setScores((prev) => ({ ...prev, [field]: n }))}
+              />
+            </div>
+          </Card>
+        ))}
+
+        {/* Custom score questions */}
+        {(appData.customScoreFields ?? []).map((field) => (
+          <Card key={`custom:${field}`} className="p-4">
+            <div className="mb-3">
+              <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1">{field}</p>
             </div>
             <div className="border-t border-gray-100 pt-3">
               <p className="text-xs text-gray-500 mb-2">Score (1 = poor, 5 = excellent)</p>

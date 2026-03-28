@@ -29,6 +29,7 @@ const SCHEMA_STATEMENTS = [
     status TEXT NOT NULL DEFAULT 'setup' CHECK (status IN ('setup', 'active', 'finalized')),
     csv_headers TEXT NOT NULL DEFAULT '[]',
     score_fields TEXT NOT NULL DEFAULT '[]',
+    custom_score_fields TEXT NOT NULL DEFAULT '[]',
     normalization_factors TEXT,
     grader_instructions TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch())
@@ -103,6 +104,16 @@ export async function initDb(): Promise<void> {
   } catch {
     // Column already exists
   }
+  try {
+    await db.execute(`ALTER TABLE config ADD COLUMN score_tabs TEXT`);
+  } catch {
+    // Column already exists
+  }
+  try {
+    await db.execute(`ALTER TABLE config ADD COLUMN custom_score_fields TEXT NOT NULL DEFAULT '[]'`);
+  } catch {
+    // Column already exists
+  }
 }
 
 // Typed helpers
@@ -118,6 +129,9 @@ export async function getConfig() {
     status: row.status as 'setup' | 'active' | 'finalized',
     csv_headers: JSON.parse(row.csv_headers as string) as string[],
     score_fields: JSON.parse(row.score_fields as string) as string[],
+    custom_score_fields: row.custom_score_fields
+      ? (JSON.parse(row.custom_score_fields as string) as string[])
+      : [],
     normalization_factors: row.normalization_factors
       ? (JSON.parse(row.normalization_factors as string) as NormalizationFactor[])
       : null,
